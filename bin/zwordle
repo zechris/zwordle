@@ -258,8 +258,7 @@ todays_zwordle_word() {
 
 todays_wordle_word() {
   curl --silent https://raw.githubusercontent.com/TylerGlaiel/wordlebot/main/wordlist_solutions.txt |
-    sed "${num-$(num)}!d"
-
+    sed "$(($(echo ${num-$(num)}) + 5))!d"
 }
 
 score() { local word=$1 guess=$2
@@ -276,7 +275,7 @@ score() { local word=$1 guess=$2
 }
 
 num() {
-  echo $(( ($(date +%s) + $(date +%z) * 36) / 86400 - ${DAY0:-18792} ))
+  echo $(( ($(date +%s) + $(date +%z) * 36) / 86400 - ${DAY0:-18797} ))
 }
 
 share() {
