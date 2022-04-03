@@ -15,7 +15,13 @@ First initialize zwordle's zsh tab completion, this can be done with:
 source zwordle
 ```
 
-*Then* the following should work in zsh: 
+*Then* the following should work in zsh:
+```
+zwordle weary=W.... pills=.i<TAB>
+```
+<img width="355" alt="Screen Shot 2022-04-04 at 09 33 23" src="https://user-images.githubusercontent.com/49626717/161453711-9f098dc6-b5d4-48fb-9f40-536f121389e4.png">
+
+
 ```
 zwordle weary=W.... pills=.i... vague=..... <TAB>
 ```
