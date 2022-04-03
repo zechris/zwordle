@@ -10,8 +10,13 @@ swordle
 ```
 
 ### Solving
+First initialize zsh tab completion, this can be done with:
 ```
 source zwordle
+```
+
+*Then* the following should work in zsh: 
+```
 zwordle weary=W.... pills=.i... vague=..... <TAB>
 ```
 <img width="555" alt="Screen Shot 2022-04-04 at 09 00 53" src="https://user-images.githubusercontent.com/49626717/161452574-07d86f06-2c09-434d-89a6-3595bbef4fec.png">
