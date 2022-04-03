@@ -10,7 +10,7 @@ swordle
 ```
 
 ### Solving
-First initialize zsh tab completion, this can be done with:
+First initialize zwordle's zsh tab completion, this can be done with:
 ```
 source zwordle
 ```
