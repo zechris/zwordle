@@ -5,13 +5,19 @@
 
 ## Usage
 ### Playing
+_This mode plays wordle's word of the day by default. Or any other day's word using eg. `num=1038`._
 ```
 zwordle
 ```
 <img width="345" alt="Screen Shot 2022-04-04 at 09 39 37" src="https://user-images.githubusercontent.com/49626717/161454154-3a22f585-4b01-476b-aff1-7386349d521c.png">
 
 
+
 ### Solving
+_This mode helps you solve other wordles, but requires you to score your own words._
+
+_Eg. using `.` (for any "grey" letter), uppercase `W` (for a "green" `W`), or lowercase `i` (for a "yellow" `I`)._
+
 First initialize zwordle's zsh tab completion, this can be done with:
 ```
 source zwordle
