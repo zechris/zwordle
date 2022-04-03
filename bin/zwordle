@@ -1,0 +1,369 @@
+#!/usr/bin/env zsh
+
+_zwordle() {
+  next() {
+    local next_words scorecard
+    eval "$(
+      $@ \
+      2> >(scorecard=$(cat)           ; typeset -p scorecard ) \
+       > >(next_words=($(cat | xargs)); typeset -p next_words)
+    )"
+
+    if [[ ${#next_words} -gt 1 ]]; then
+      compadd -X "$scorecard" -S = -a next_words
+    else
+      printf "${next_words} "
+    fi
+  }
+
+  score() {
+    local last_token word char grey yellow green separator score_index
+    local -a prev_scores=(${@[2,-2]/*=})
+
+    last_token=$@[-1]
+    word=${last_token/=*}
+    score_index=$((${#last_token}-${#word}-1))
+    char=${word:$score_index:1}
+    [[ $score_index -gt 3 ]] && separator=' ' || separator=''
+    grey="."; yellow=$char; green=${char:u}
+
+    local -a options=("${grey}" "${yellow}" "${green}")
+
+    for prev_score in $prev_scores; do
+      prev_score_char=${prev_score:$score_index:1}
+      if [[ $prev_score_char = "$green" ]]; then
+        options=("${green}")
+      fi
+    done
+
+    scorecard="$(eval "$@" 2>&1 1>/dev/null)"
+
+    compadd -X "$scorecard" -P "$last_token" -S "$separator" $options
+  }
+
+  echo "tokens=[${tokens}]" >> /tmp/stdout
+  case $tokens[-1] in
+    (?????=?????  ) next  $tokens ;;
+    *=*           ) score $tokens ;;
+    *             )
+      if [[ ${#tokens} -eq 1 ]]; then
+        local words=(adieu crane leant radio slice tried)
+        compadd -S = -a words
+      else
+        next ${tokens[0,${#tokens}-1]}
+      fi ;;
+  esac
+}
+
+
+################################################
+if [[ $ZSH_EVAL_CONTEXT =~ :file$ ]]; then
+  compdef _zwordle zwordle
+  # If this file has been `source`-ed exit here.
+  kill -INT $$
+fi
+################################################
+
+_zwordle_play() {
+  next() {
+    local next_words scorecard
+    eval "$(
+      $@ \
+      2> >(scorecard=$(cat)           ; typeset -p scorecard ) \
+       > >(next_words=($(cat | xargs)); typeset -p next_words)
+    )"
+
+    if [[ ${#next_words} -gt 1 ]]; then
+      compadd -X "$scorecard" -a next_words
+    else
+      printf "${next_words} "
+    fi
+  }
+
+  if [[ ${#tokens} -eq 1 ]]; then
+    local words=(adieu crane leant radio slice tried)
+    compadd -a words
+  else
+    next ${tokens[0,${#tokens}]}
+  fi
+}
+
+WORDFILE=${WORDFILE:-/usr/share/dict/words}
+
+debug() {
+  ${DEBUG:-false} && >&2 echo "$@"
+}
+
+downcase() {
+  tr '[:upper:]' '[:lower:]'
+}
+
+upcase() {
+  tr '[:lower:]' '[:upper:]'
+}
+
+all_words() {
+  # cat "$WORDFILE"
+  curl --silent https://raw.githubusercontent.com/TylerGlaiel/wordlebot/main/wordlist_guesses.txt | dos2unix | sort
+}
+
+with_five_letters() {
+  echo '^.{5}$'
+}
+
+without_proper_nouns() {
+  echo '^[^A-Z]'
+}
+
+
+### GREYS
+greys_from() { local guess=$1 score=$2
+  comm -23 <(echo "$guess"            | fold -w1 | sort -u) \
+           <(echo "$score" | downcase | fold -w1 | sort -u)
+}
+
+greys() {
+  printf "%s" "$GREYS" | fold -w1 | sort -u | tr '\n' ' '
+}
+
+without_greys() {
+  local pat
+  pat="$(greys)"
+  echo "${pat:+^[^${pat// /}]*$}"
+}
+### GREYS
+
+### YELLOWS
+yellow_pat_from() { local score=$1
+  echo "^$score\$" | tr '[:upper:]' '.' | grep -v '\.\.\.\.\.' | sed 's/\([a-z]\)/[^\1]/g'
+}
+
+yellows_from() { local score=$1
+  echo "$score" | fold -w1 | grep '[a-z]'
+}
+
+yellows() {
+  echo "$YELLOWS" | fold -w1 | sort -u | tr '\n' ' '
+}
+
+yellow_pats() {
+  echo "$YELLOW_PATS"
+}
+
+with_yellows() {
+  yellows
+}
+
+with_yellow_pats() {
+  yellow_pats
+}
+### YELLOWS
+
+### GREENS
+green_pat_from() { local score=$1
+  echo "^$score\$" | tr '[:lower:]' '.' | grep -v '\.\.\.\.\.' | downcase
+}
+
+green_pats() {
+  echo "$GREEN_PATS"
+}
+
+with_green_pats() {
+  green_pats
+}
+# GREENS
+
+filters() {
+  without_greys
+  with_yellow_pats
+  with_green_pats
+  with_yellows
+}
+
+with_filters() {
+  filter() {
+    if [[ -n $1 ]]; then
+      debug "pat=($1)"
+      egrep "$1" | filter "${@:2}"
+    else
+      cat
+    fi
+  }
+
+  filter "$@"
+}
+
+words() {
+  echo "$WORDS"
+}
+
+print_guess() { local chars=$1 scores=$2
+  char_color() { local score=$1
+    case $score in
+      ([A-Z]) echo "32;1" ;;
+      ([a-z]) echo "33;1" ;;
+      *     ) echo "0"    ;;
+    esac
+  }
+
+  if [[ ${#scores} -gt 0 ]]; then
+    printf "[$(char_color "${scores:0:1}")m%s[0m" "$(echo "${chars:0:1}" | upcase)"
+    [[ ${#chars} -gt 1 ]] && print_guess "${chars#?}" "${scores#?}" || echo
+  else
+    echo "[7m${chars:0:1}[0m"
+  fi
+}
+
+solve() {
+  for guess_score in "$@"; do
+    IFS='=' read -r guess score <<< "$guess_score"
+
+    if [[ -n "$score" ]]; then
+      GREYS="${GREYS} $(greys_from "$guess" "$score")"
+      YELLOWS="${YELLOWS} $(yellows_from "$score")"
+      YELLOW_PATS="${YELLOW_PATS} $(yellow_pat_from "$score")"
+      GREEN_PATS="${GREEN_PATS} $(green_pat_from "$score")"
+      >&2 print_guess "$guess" "$score"
+    fi
+  done
+
+  FILTERS=($(filters))
+
+  debug <<-EOF
+─────
+greys=($(greys))
+yellows=($(yellows))
+yellow_pats=($(yellow_pats))
+green_pats=($(green_pats))
+FILTERS=(${FILTERS[*]})
+EOF
+
+  >&2 echo "─────"
+
+  words | with_filters "${FILTERS[@]}"
+}
+
+######### play
+
+num_words() {
+  echo "${num_words:=$(words | wc -l | sed 's/[^0-9]//g')}"
+}
+
+todays_zwordle_word() {
+  num_words=$(num_words)
+  num=${num:-$(num)}
+  >&2 echo "word $num of $num_words"
+  words | shuf --random-source="$WORDFILE" | sed "${num}!d"
+}
+
+todays_wordle_word() {
+  curl --silent https://raw.githubusercontent.com/TylerGlaiel/wordlebot/main/wordlist_solutions.txt |
+    sed "${num-$(num)}!d"
+
+}
+
+score() { local word=$1 guess=$2
+  for i in $(seq 0 ${#guess}); do
+    char=${guess:$i:1}
+    if [[ ${word:$i:1} == "${guess:$i:1}" ]]; then
+      printf "%s" "$(echo "$char" | upcase)"
+    elif [[ "${word}" == *"$char"* ]]; then
+      printf "%s" "$char"
+    else
+      printf "."
+    fi
+  done
+}
+
+num() {
+  echo $(( ($(date +%s) + $(date +%z) * 36) / 86400 - ${DAY0:-18792} ))
+}
+
+share() {
+  cat <<-EOF
+ZWordle ${num:-$(num)} ${#@}/6
+
+$(
+for s in "${scores[@]}"; do
+  s=${s//[A-Z]/🟩}
+  s=${s//[a-z]/🟨}
+  echo "${s//./⬜}"
+done
+)
+EOF
+}
+
+play() {
+  tokens=(zwordle)
+
+  #WORD=$(todays_zwordle_word)
+  WORD=$(todays_wordle_word)
+  debug "guessing: $WORD"
+
+  autoload -U compinit; compinit
+  local compcontext='zwordle:word:_zwordle_play'
+
+  trap ctrl_c INT
+
+  save_cmd_to_history() {
+    echo "zwordle$(for i in $(seq ${#guesses[@]}); do printf " %s" "${guesses[i]}=${scores[i]}"; done)"
+  }
+
+  ctrl_c() {
+    save_cmd_to_history | pbcopy
+    pbpaste | print -z
+    kill -TERM $$
+  }
+
+  
+  local guesses=()
+  local scores=()
+  local guess
+  while ! [[ "$score" =~ ^[A-Z][A-Z][A-Z][A-Z][A-Z]$ ]]; do
+    unset guess
+    vared -c guess; guess=$(echo "$guess" | downcase)
+    echo -en "\033[1A\033[2K"  # move up a line
+    if words | grep "^$guess\$" > /dev/null; then
+      score="$(score "$WORD" "$guess")"
+      guesses+=($guess)
+      scores+=($score)
+      tokens+=("${guess}=${score}")
+      print_guess "$guess" "$score"
+    fi
+  done
+
+  echo
+  if read -q "?Copy results to clibpoard? "; then
+    share "${scores[@]}" | pbcopy
+    echo; pbpaste
+  fi
+}
+
+
+WORDS=("${WORDS:-$(all_words | with_filters "$(with_five_letters)" "$(without_proper_nouns)")}")
+
+
+if [[ $# -gt 0 ]]; then
+  for item in $@; do
+    IFS='=' read guess scores_str <<< "$item"
+    scores=("${(@s/=/)scores_str}")
+    N=${N:-${#scores[@]}}
+
+    for i in {1..$N}; do
+      guess_scores[i]+="$guess=${scores[$i]} "
+    done
+  done
+
+  if [[ $N -gt 1 ]]; then
+    cmd=(paste)
+    for guess_scores in ${guess_scores[@]}; do
+      cmd+=("<(solve $guess_scores 2>&1)")
+    done
+
+    eval $cmd
+  else
+    solve $@
+  fi
+else
+  play
+fi
