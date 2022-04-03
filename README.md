@@ -6,8 +6,10 @@
 ## Usage
 ### Playing
 ```
-swordle
+zwordle
 ```
+<img width="345" alt="Screen Shot 2022-04-04 at 09 39 37" src="https://user-images.githubusercontent.com/49626717/161454154-3a22f585-4b01-476b-aff1-7386349d521c.png">
+
 
 ### Solving
 First initialize zwordle's zsh tab completion, this can be done with:
