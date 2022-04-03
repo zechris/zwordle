@@ -16,7 +16,10 @@ zwordle
 ### Solving
 _This mode helps you solve other wordles, but requires you to score your own words._
 
-_Eg. using `.` (for any "grey" letter), uppercase `W` (for a "green" `W`), or lowercase `i` (for a "yellow" `I`)._
+Examples:
+ * `.` (for any ⬜ letter)
+ * uppercase `W` (for a 🟩 `W`)
+ * lowercase `i` (for a 🟨 `I`)
 
 First initialize zwordle's zsh tab completion, this can be done with:
 ```
