@@ -38,6 +38,13 @@ zwordle weary=W.... pills=.i... vague=..... <TAB>
 ```
 <img width="555" alt="Screen Shot 2022-04-04 at 09 00 53" src="https://user-images.githubusercontent.com/49626717/161452574-07d86f06-2c09-434d-89a6-3595bbef4fec.png">
 
+### Solving (multi)
+_([dordle](https://zaratustra.itch.io/dordle) or [quordle](https://www.quordle.com/) or ...)_
+```
+zwordle radio=Ra...=r...o=....o=R...o rumba=RU..a=rU...=..M..=R.... rural=RURAL=.UR..=....l=R.... furor==.UROR=...O.=..ro. juror==JUROR=...O.=..ro. lemon===LEMON=...o. rocks====ROCKS
+```
+<img width="1007" alt="Screen Shot 2022-04-04 at 10 44 55" src="https://user-images.githubusercontent.com/49626717/161456953-19b9cfc5-b391-4a59-8b27-3334eb835083.png">
+
 
 ## Installation
 ```
