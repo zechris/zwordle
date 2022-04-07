@@ -256,9 +256,23 @@ todays_zwordle_word() {
   words | shuf --random-source="$WORDFILE" | sed "${num}!d"
 }
 
+NYT_REMOVED=(241 245 274 295 305 396)
+nyt_offset_for() {
+  offset=3
+  for removed in $NYT_REMOVED; do
+    if [ $1 -ge $removed ]; then
+      ((offset++))
+    else
+      break
+    fi
+  done
+  echo $offset
+}
+
 todays_wordle_word() {
+  num=${num-$(num)}
   curl --silent https://raw.githubusercontent.com/TylerGlaiel/wordlebot/main/wordlist_solutions.txt |
-    sed "$(($(echo ${num-$(num)}) + 5))!d"
+    sed "$(($num + $(nyt_offset_for $num)))!d"
 }
 
 score() { local word=$1 guess=$2
