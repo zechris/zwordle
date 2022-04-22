@@ -258,7 +258,7 @@ todays_zwordle_word() {
 
 NYT_REMOVED=(241 245 274 295 305 396)
 nyt_offset_for() {
-  offset=3
+  offset=2
   for removed in $NYT_REMOVED; do
     if [ $1 -ge $removed ]; then
       ((offset++))
