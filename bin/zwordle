@@ -256,7 +256,7 @@ todays_zwordle_word() {
   words | shuf --random-source="$WORDFILE" | sed "${num}!d"
 }
 
-NYT_REMOVED=(241 245 274 295 305 396)
+NYT_REMOVED=(241 245 274 295 305 321 396)
 nyt_offset_for() {
   offset=2
   for removed in $NYT_REMOVED; do
